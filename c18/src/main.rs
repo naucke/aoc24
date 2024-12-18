@@ -15,7 +15,7 @@ impl Pos {
         return 2 * DIM - (x + y);
     }
 
-    fn successors(&self, blocked: &HashSet<Pos>) -> Vec<(Pos, i16)> {
+    fn successors(&self, blocked: &[Pos]) -> Vec<(Pos, i16)> {
         let &Pos(x, y) = self;
         let succ: HashSet<_> = [
             (x > 0, Pos(x - 1, y)),
@@ -28,11 +28,15 @@ impl Pos {
         .map(|(_, p)| p)
         .cloned()
         .collect();
-        return succ.difference(blocked).cloned().map(|x| (x, 1)).collect();
+        return succ
+            .difference(&(blocked.into_iter().cloned().collect()))
+            .cloned()
+            .map(|x| (x, 1))
+            .collect();
     }
 }
 
-fn collect_blocked(blocked: Vec<String>) -> HashSet<Pos> {
+fn collect_blocked(blocked: Vec<String>) -> Vec<Pos> {
     return blocked
         .iter()
         .map(|s| {
@@ -42,20 +46,24 @@ fn collect_blocked(blocked: Vec<String>) -> HashSet<Pos> {
         .collect();
 }
 
+fn task_a(blocked: &Vec<Pos>) -> i16 {
+    return astar(
+        &Pos(0, 0),
+        |p| p.successors(&blocked[..=DEPTH]),
+        |p| p.distance(),
+        |p| *p == Pos(DIM, DIM),
+    )
+    .unwrap()
+    .1;
+}
+
 fn main() {
     let blocked = collect_blocked(
         io::BufReader::new(File::open("input").unwrap())
             .lines()
             .into_iter()
-            .take(DEPTH)
             .map(|s| s.unwrap())
             .collect(),
     );
-    let result = astar(
-        &Pos(0, 0),
-        |p| p.successors(&blocked),
-        |p| p.distance(),
-        |p| *p == Pos(DIM, DIM),
-    );
-    println!("{}", result.unwrap().1);
+    println!("{}", task_a(&blocked));
 }
