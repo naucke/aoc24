@@ -68,7 +68,7 @@ fn task_b(blocked: &Vec<Pos>) -> &Pos {
 
 fn main() {
     let lines = io::BufReader::new(File::open("input").unwrap()).lines();
-    let blocked = collect_blocked(lines.into_iter().map(|s| s.unwrap()).collect());
+    let blocked = collect_blocked(lines.collect::<Result<_, _>>().unwrap());
     println!("{}", task_a(&blocked));
     println!("{:?}", task_b(&blocked));
 }
