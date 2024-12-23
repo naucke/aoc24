@@ -2,7 +2,6 @@ use std::fs::File;
 use std::io::{self, BufRead};
 
 const BEAT_BY: usize = 100;
-const JUMP: usize = 2;
 
 type Pos = (usize, usize);
 type Map = Vec<Vec<char>>;
@@ -16,7 +15,6 @@ fn no_cheat(map: &Map) -> Dist {
         }
     });
     let mut out = vec![(0, 0), (x, y)];
-    // TODO unfold?
     while map[y][x] != 'E' {
         let neighb = vec![(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)];
         let ni = neighb.iter();
@@ -28,15 +26,14 @@ fn no_cheat(map: &Map) -> Dist {
     return out;
 }
 
-fn cheat(track: &Dist) -> usize {
+fn cheat(track: &Dist, jump: usize) -> usize {
     let pos_dists = track.iter().enumerate().map(|(i, &(x, y))| {
-        (i + JUMP..track.len()).into_iter().map(move |j| {
-            let dist = (x as i64 - track[j].0 as i64).abs() + (y as i64 - track[j].1 as i64).abs();
-            ((i, j), dist as usize)
-        })
+        (i + jump..track.len())
+            .into_iter()
+            .map(move |j| ((i, j), x.abs_diff(track[j].0) + y.abs_diff(track[j].1)))
     });
-    let far_enough = pos_dists.flatten().filter(|&(_, d)| d <= JUMP);
-    let dists = far_enough.map(|((i, j), d)| j - i - d);
+    let allowed = pos_dists.flatten().filter(|&(_, d)| d <= jump);
+    let dists = allowed.map(|((i, j), d)| j - i - d);
     return dists.filter(|&a| a >= BEAT_BY).count();
 }
 
@@ -46,6 +43,6 @@ fn main() {
     let map: Vec<Vec<_>> = line_vec.iter().map(|s| s.chars().collect()).collect();
 
     let dist = no_cheat(&map);
-    let cheat = cheat(&dist);
-    println!("{}", cheat);
+    println!("{}", cheat(&dist, 2));
+    println!("{}", cheat(&dist, 20));
 }
