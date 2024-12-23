@@ -1,101 +1,43 @@
 use std::fs::File;
 use std::io::{self, BufRead};
 
-const BEAT_BY: i16 = 100;
+const BEAT_BY: usize = 100;
+const JUMP: usize = 2;
 
 type Pos = (usize, usize);
 type Map = Vec<Vec<char>>;
-type Dist = Vec<Vec<i16>>;
-
-fn legal<T>(map: &Vec<Vec<T>>, pos: &Pos) -> bool {
-    return map.len() > pos.1 && map[0].len() > pos.0;
-}
-
-fn get_at<T: Copy>(map: &Vec<Vec<T>>, pos: &Pos) -> T {
-    return map[pos.1][pos.0];
-}
-
-fn set_at<T>(map: &mut Vec<Vec<T>>, pos: &Pos, data: T) {
-    map[pos.1][pos.0] = data;
-}
+type Dist = Vec<Pos>;
 
 fn no_cheat(map: &Map) -> Dist {
-    let mut start = (0, 0);
-    'outer: for y in 0..map.len() {
-        for x in 0..map[y].len() {
-            if get_at(map, &(x, y)) == 'S' {
-                start = (x, y);
-                break 'outer;
-            }
+    let (mut x, mut y) = (0, 0);
+    map.iter().enumerate().for_each(|(j, row)| {
+        if let Some(i) = row.iter().position(|&c| c == 'S') {
+            (x, y) = (i, j);
         }
+    });
+    let mut out = vec![(0, 0), (x, y)];
+    // TODO unfold?
+    while map[y][x] != 'E' {
+        let neighb = vec![(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)];
+        let ni = neighb.iter();
+        let mut next = ni.filter(|&p| *p != out[out.len() - 2] && map[p.1][p.0] != '#');
+        (x, y) = *(next.next().unwrap());
+        out.push((x, y));
     }
-    let mut out = vec![vec![-1; map[0].len()]; map.len()];
-    set_at(&mut out, &start, 0);
-    let mut count = 0;
-    let mut pred = (0, 0);
-    let mut pos = start;
-    while get_at(map, &pos) != 'E' {
-        let neighb = vec![
-            (pos.0 + 1, pos.1),
-            (pos.0 - 1, pos.1),
-            (pos.0, pos.1 + 1),
-            (pos.0, pos.1 - 1),
-        ];
-        let new = neighb
-            .iter()
-            .filter(|p| {
-                let c = get_at(map, p);
-                return **p != pred && (c == '.' || c == 'E');
-            })
-            .next()
-            .unwrap();
-        pred = pos;
-        pos = *new;
-        set_at(&mut out, &pos, count);
-        count += 1;
-    }
+    out.remove(0);
     return out;
 }
 
-fn cheat(map: &Dist) -> usize {
-    let mut out = 0;
-    for y in 1..(map.len() - 1) {
-        for x in 1..(map[y].len() - 1) {
-            if get_at(map, &(x, y)) != -1 {
-                continue;
-            }
-            let left_pred = get_at(map, &(x - 1, y));
-            let up_pred = get_at(map, &(x, y - 1));
-            let mut jump = Vec::new();
-            if left_pred >= 0 {
-                let mut jump_right = vec![(x + 1, y + 1), (x + 1, y - 1), (x + 2, y)];
-                if get_at(map, &(x, y + 1)) >= 0 {
-                    jump_right.push((x, y + 2));
-                }
-                if get_at(map, &(x, y - 1)) >= 0 {
-                    jump_right.push((x, y - 2));
-                }
-                jump.append(&mut (jump_right.iter().map(|&p| (left_pred, p)).collect()));
-            }
-            if up_pred >= 0 {
-                let mut jump_down = vec![(x + 1, y + 1), (x - 1, y + 1), (x, y + 2)];
-                if get_at(map, &(x + 1, y)) >= 0 {
-                    jump_down.push((x + 2, y));
-                }
-                if get_at(map, &(x - 1, y)) >= 0 {
-                    jump_down.push((x - 2, y));
-                }
-                jump.append(&mut (jump_down.iter().map(|&p| (up_pred, p)).collect()));
-            }
-            out += jump
-                .iter()
-                .filter(|(_, p)| legal(map, p) && get_at(map, p) >= 0)
-                .map(|(pred, pos)| (pred - get_at(map, pos)).abs())
-                .filter(|&a| a >= BEAT_BY)
-                .count();
-        }
-    }
-    return out;
+fn cheat(track: &Dist) -> usize {
+    let pos_dists = track.iter().enumerate().map(|(i, &(x, y))| {
+        (i + JUMP..track.len()).into_iter().map(move |j| {
+            let dist = (x as i64 - track[j].0 as i64).abs() + (y as i64 - track[j].1 as i64).abs();
+            ((i, j), dist as usize)
+        })
+    });
+    let far_enough = pos_dists.flatten().filter(|&(_, d)| d <= JUMP);
+    let dists = far_enough.map(|((i, j), d)| j - i - d);
+    return dists.filter(|&a| a >= BEAT_BY).count();
 }
 
 fn main() {
