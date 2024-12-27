@@ -17,8 +17,12 @@ fn trailheads(map: &Map, &(x, y): &Pos, start: u8) -> (HashSet<Pos>, u16) {
         .iter()
         .map(|p| trailheads(map, p, start + 1))
         .collect();
-    let a = heads.iter().map(|r| r.0.clone()).flatten().collect();
-    let b = heads.iter().map(|r| r.1).sum();
+    let mut a = HashSet::new();
+    let mut b = 0;
+    for h in heads {
+        a.extend(h.0);
+        b += h.1;
+    }
     (a, b)
 }
 
@@ -29,17 +33,15 @@ fn main() {
         .iter()
         .map(|s| s.chars().map(|c| c.to_string().parse().unwrap()).collect())
         .collect();
-    let clos = |(a1, b1), (a2, b2)| (a1 + a2, b1 + b2);
-    let res = (0..map[0].len()).map(|x| {
-        let row = (0..map.len()).map({
-            // TODO without closure this clone is unnecessary
-            let m = map.clone();
-            move |y| {
-                let heads = trailheads(&m, &(x, y), 0);
-                (heads.0.len(), heads.1)
-            }
-        });
-        row.reduce(clos).unwrap()
-    });
-    println!("{:?}", res.reduce(clos).unwrap());
+
+    let mut res = Vec::new();
+    for x in 0..map[0].len() {
+        for y in 0..map.len() {
+            let (a, b) = trailheads(&map, &(x, y), 0);
+            res.push((a.len(), b));
+        }
+    }
+    let res_iter = res.iter().copied();
+    let res_red = res_iter.reduce(|(a1, b1), (a2, b2)| (a1 + a2, b1 + b2));
+    println!("{:?}", res_red.unwrap());
 }
