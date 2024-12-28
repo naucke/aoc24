@@ -29,7 +29,7 @@ fn step(p: &Pos) -> Pos {
         Direction::S => p.y -= 1,
         Direction::E => p.x += 1,
     }
-    return p;
+    p
 }
 
 #[derive(Clone, Eq, Hash, PartialEq)]
@@ -41,8 +41,7 @@ struct Pos {
 
 impl Pos {
     fn distance(&self, map: &Map) -> usize {
-        return (map[0].len() - 2 - self.x) +
-               (self.y - 1);
+        (map[0].len() - 2 - self.x) + (self.y - 1)
     }
 
     fn successors(&self, map: &Map) -> Vec<(Pos, usize)> {
@@ -51,7 +50,7 @@ impl Pos {
             .map(|d| {
                 let mut p = self.clone();
                 p.d = d.clone();
-                return (p, 1000);
+                (p, 1000)
             })
             .collect();
         let step = step(&self);
@@ -59,7 +58,7 @@ impl Pos {
         if step_char == '.' || step_char == 'E' {
             res.push((step, 1));
         }
-        return res;
+        res
     }
 }
 

@@ -18,7 +18,7 @@ impl VM {
     }
 
     fn dv(&self, arg: u8) -> i64 {
-        return self.a / (1 << self.combo(arg));
+        self.a / (1 << self.combo(arg))
     }
 
     fn run(&mut self, prog: &[u8]) -> Vec<u8> {
@@ -44,7 +44,7 @@ impl VM {
             }
             ip += 2;
         }
-        return out;
+        out
     }
 }
 

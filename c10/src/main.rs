@@ -31,7 +31,7 @@ fn main() {
     let line_vec: Vec<_> = lines.collect::<Result<_, _>>().unwrap();
     let map: Vec<Vec<_>> = line_vec
         .iter()
-        .map(|s| s.chars().map(|c| c.to_string().parse().unwrap()).collect())
+        .map(|s| s.chars().map(|c| c.to_digit(10).unwrap() as u8).collect())
         .collect();
 
     let mut res = Vec::new();
@@ -41,7 +41,10 @@ fn main() {
             res.push((a.len(), b));
         }
     }
-    let res_iter = res.iter().copied();
-    let res_red = res_iter.reduce(|(a1, b1), (a2, b2)| (a1 + a2, b1 + b2));
-    println!("{:?}", res_red.unwrap());
+    let (mut a, mut b) = (0, 0);
+    for (a1, b1) in res {
+        a += a1;
+        b += b1;
+    }
+    println!("{}, {}", a, b);
 }

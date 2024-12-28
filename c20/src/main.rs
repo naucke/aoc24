@@ -9,11 +9,11 @@ type Dist = Vec<Pos>;
 
 fn no_cheat(map: &Map) -> Dist {
     let (mut x, mut y) = (0, 0);
-    map.iter().enumerate().for_each(|(j, row)| {
+    for (j, row) in map.iter().enumerate() {
         if let Some(i) = row.iter().position(|&c| c == 'S') {
             (x, y) = (i, j);
         }
-    });
+    }
     let mut out = vec![(0, 0), (x, y)];
     while map[y][x] != 'E' {
         let neighb = vec![(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)];
@@ -23,7 +23,7 @@ fn no_cheat(map: &Map) -> Dist {
         out.push((x, y));
     }
     out.remove(0);
-    return out;
+    out
 }
 
 fn cheat(track: &Dist, jump: usize) -> usize {
@@ -34,7 +34,7 @@ fn cheat(track: &Dist, jump: usize) -> usize {
     });
     let allowed = pos_dists.flatten().filter(|&(_, d)| d <= jump);
     let dists = allowed.map(|((i, j), d)| j - i - d);
-    return dists.filter(|&a| a >= BEAT_BY).count();
+    dists.filter(|&a| a >= BEAT_BY).count()
 }
 
 fn main() {

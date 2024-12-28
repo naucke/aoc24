@@ -12,8 +12,7 @@ struct Pos(i16, i16);
 
 impl Pos {
     fn distance(&self) -> i16 {
-        let &Pos(x, y) = self;
-        return 2 * DIM - (x + y);
+        2 * DIM - (self.0 + self.1)
     }
 
     fn successors(&self, blocked: &[Pos]) -> Vec<(Pos, i16)> {
@@ -25,34 +24,34 @@ impl Pos {
             (y < DIM, Pos(x, y + 1)),
         ];
         let succ = surround.iter().filter(|(b, _)| *b).map(|(_, p)| p);
-        let succ_set: HashSet<_> = succ.cloned().collect();
-        let binding = blocked.into_iter().cloned().collect();
+        let succ_set: HashSet<&Pos> = succ.collect();
+        let binding = blocked.iter().collect();
         let diff = succ_set.difference(&binding);
-        return diff.cloned().map(|x| (x, 1)).collect();
+        diff.cloned().map(|x| (x.clone(), 1)).collect()
     }
 
     fn search(&self, blocked: &[Pos]) -> Option<(Vec<Pos>, i16)> {
-        return astar(
+        astar(
             self,
             |p| p.successors(blocked),
             |p| p.distance(),
             |p| *p == Pos(DIM, DIM),
-        );
+        )
     }
 }
 
 fn collect_blocked(blocked: Vec<String>) -> Vec<Pos> {
-    return blocked
+    blocked
         .iter()
         .map(|s| {
             let sp: Vec<_> = s.split(',').map(|i| i.parse().unwrap()).collect();
-            return Pos(sp[0], sp[1]);
+            Pos(sp[0], sp[1])
         })
-        .collect();
+        .collect()
 }
 
 fn task_a(blocked: &Vec<Pos>) -> i16 {
-    return Pos(0, 0).search(&blocked[..DEPTH]).unwrap().1;
+    Pos(0, 0).search(&blocked[..DEPTH]).unwrap().1
 }
 
 fn task_b(blocked: &Vec<Pos>) -> &Pos {
@@ -63,7 +62,7 @@ fn task_b(blocked: &Vec<Pos>) -> &Pos {
             _ => Ordering::Greater,
         })
         .unwrap_err();
-    return &blocked[idx - 1];
+    &blocked[idx - 1]
 }
 
 fn main() {
